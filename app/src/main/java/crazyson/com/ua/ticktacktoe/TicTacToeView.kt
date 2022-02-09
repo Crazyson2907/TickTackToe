@@ -67,8 +67,8 @@ class TicTacToeView(
         initPaints()
         if (isInEditMode) {
             ticTacToeField = TicTacToeField(8, 6)
-            ticTacToeField?.setCell(4,2, Cell.PLAYER_1)
-            ticTacToeField?.setCell(6, 2, Cell.PLAYER_2)
+//            ticTacToeField?.setCell(4,2, Cell.PLAYER_1)
+//            ticTacToeField?.setCell(6, 2, Cell.PLAYER_2)
         }
     }
 
@@ -143,7 +143,7 @@ class TicTacToeView(
         val columns = ticTacToeField?.columns ?: 0
 
         val desiredWidth = max(minWidth, columns * desiredCellSizeInPixels + paddingRight)
-        val desiredHeight = max(minWidth, rows * desiredCellSizeInPixels + paddingBottom)
+        val desiredHeight = max(minHeight, rows * desiredCellSizeInPixels + paddingBottom)
 
         setMeasuredDimension(
             resolveSize(desiredWidth, widthMeasureSpec),
@@ -164,7 +164,6 @@ class TicTacToeView(
 
     private fun drawGrid(canvas: Canvas) {
         val field = this.ticTacToeField ?: return
-
         val xStart = fieldRect.left
         val xEnd = fieldRect.right
         for (i in 0..field.rows) {
