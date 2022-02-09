@@ -1,12 +1,15 @@
 package crazyson.com.ua.ticktacktoe
 
 import android.content.Context
+import android.graphics.Canvas
 import android.graphics.Color
+import android.graphics.Paint
 import android.graphics.RectF
 import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.View
 import java.lang.Float.min
+import java.lang.Integer.max
 import kotlin.properties.Delegates
 
 class TicTacToeView(
@@ -34,6 +37,12 @@ class TicTacToeView(
     private var cellSize: Float = 0f
     private var cellPadding: Float = 0f
 
+    private val cellRect = RectF()
+
+    private lateinit var player1Paint: Paint
+    private lateinit var player2Paint: Paint
+    private lateinit var gridPaint: Paint
+
     constructor(context: Context, attributeSet: AttributeSet?, defStyleAttr: Int) : this(
         context,
         attributeSet,
@@ -55,6 +64,12 @@ class TicTacToeView(
         } else {
             initDefaultColors()
         }
+        initPaints()
+        if (isInEditMode) {
+            ticTacToeField = TicTacToeField(8, 6)
+            ticTacToeField?.setCell(4,2, Cell.PLAYER_1)
+            ticTacToeField?.setCell(6, 2, Cell.PLAYER_2)
+        }
     }
 
     override fun onAttachedToWindow() {
@@ -65,6 +80,26 @@ class TicTacToeView(
     override fun onDetachedFromWindow() {
         super.onDetachedFromWindow()
         ticTacToeField?.listeners?.remove(listener)
+    }
+
+    private fun initPaints() {
+        player1Paint = Paint(Paint.ANTI_ALIAS_FLAG)
+        player1Paint.color = player1Color
+        player1Paint.style = Paint.Style.STROKE
+        player1Paint.strokeWidth =
+            TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 3f, resources.displayMetrics)
+
+        player2Paint = Paint(Paint.ANTI_ALIAS_FLAG)
+        player2Paint.color = player2Color
+        player2Paint.style = Paint.Style.STROKE
+        player2Paint.strokeWidth =
+            TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 3f, resources.displayMetrics)
+
+        gridPaint = Paint(Paint.ANTI_ALIAS_FLAG)
+        gridPaint.color = gridColor
+        gridPaint.style = Paint.Style.STROKE
+        gridPaint.strokeWidth =
+            TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, 1f, resources.displayMetrics)
     }
 
     private fun initAttributes(attributeSet: AttributeSet?, defStyleAttr: Int, defStyleRes: Int) {
@@ -98,18 +133,84 @@ class TicTacToeView(
         val minWidth = suggestedMinimumWidth + paddingLeft + paddingRight
         val minHeight = suggestedMinimumHeight + paddingTop + paddingBottom
 
-        val desiredCellSizeInPixels = TypedValue.applyDimension(TypedValue.COMPLEX_UNIT_DIP, DESIRED_CELL_SIZE, resources.displayMetrics).toInt()
+        val desiredCellSizeInPixels = TypedValue.applyDimension(
+            TypedValue.COMPLEX_UNIT_DIP,
+            DESIRED_CELL_SIZE,
+            resources.displayMetrics
+        ).toInt()
 
         val rows = ticTacToeField?.rows ?: 0
         val columns = ticTacToeField?.columns ?: 0
 
-        val desiredWidth = columns * desiredCellSizeInPixels + paddingLeft + paddingRight
-        val desiredHeight = rows * desiredCellSizeInPixels + paddingTop + paddingBottom
+        val desiredWidth = max(minWidth, columns * desiredCellSizeInPixels + paddingRight)
+        val desiredHeight = max(minWidth, rows * desiredCellSizeInPixels + paddingBottom)
 
         setMeasuredDimension(
             resolveSize(desiredWidth, widthMeasureSpec),
             resolveSize(desiredHeight, heightMeasureSpec)
         )
+    }
+
+    override fun onDraw(canvas: Canvas) {
+        super.onDraw(canvas)
+        if (ticTacToeField == null) return
+        if (cellSize == 0f) return
+        if (fieldRect.width() <= 0) return
+        if (fieldRect.height() <= 0) return
+
+        drawGrid(canvas)
+        drawCells(canvas)
+    }
+
+    private fun drawGrid(canvas: Canvas) {
+        val field = this.ticTacToeField ?: return
+
+        val xStart = fieldRect.left
+        val xEnd = fieldRect.right
+        for (i in 0..field.rows) {
+            val y = fieldRect.top + cellSize*i
+            canvas.drawLine(xStart, y, xEnd, y, gridPaint)
+        }
+        val yStart = fieldRect.top
+        val yEnd = fieldRect.bottom
+        for (i in 0..field.columns) {
+            val x = fieldRect.left + cellSize*i
+            canvas.drawLine(x, yStart, x, yEnd, gridPaint)
+        }
+
+    }
+
+    private fun drawCells(canvas: Canvas) {
+        val field = this.ticTacToeField ?: return
+        for (row in 0 until field.rows) {
+            for (column in 0 until field.columns) {
+                val cell = field.getCell(row, column)
+                if (cell == Cell.PLAYER_1) {
+                    drawPlayer1(canvas, row, column)
+                } else if (cell == Cell.PLAYER_2) {
+                    drawPlayer2(canvas, row, column)
+                }
+            }
+        }
+    }
+
+    private fun drawPlayer1(canvas: Canvas, row: Int, column: Int) {
+        val cellRect = getCellRect(row, column)
+        canvas.drawLine(cellRect.left, cellRect.top, cellRect.right, cellRect.bottom, player1Paint)
+        canvas.drawLine(cellRect.right, cellRect.top, cellRect.left, cellRect.bottom, player1Paint)
+    }
+
+    private fun drawPlayer2(canvas: Canvas, row: Int, column: Int) {
+        val cellRect = getCellRect(row, column)
+        canvas.drawCircle(cellRect.centerX(), cellRect.centerY(), cellRect.width()/2, player2Paint)
+    }
+
+    private fun getCellRect(row: Int, column: Int): RectF {
+        cellRect.left = fieldRect.left + column * cellSize + cellPadding
+        cellRect.top = fieldRect.top + row * cellSize + cellPadding
+        cellRect.right = fieldRect.right + cellSize - cellPadding * 2
+        cellRect.bottom = fieldRect.bottom + cellSize - cellPadding * 2
+        return cellRect
     }
 
     private fun updateViewSizes() {
@@ -118,19 +219,19 @@ class TicTacToeView(
         val safeWidth = width - paddingLeft - paddingRight
         val safeHeight = height - paddingTop - paddingBottom
 
-        val cellWidth = safeWidth / field.columns.toFloat()
-        val cellHeight = safeHeight / field.rows.toFloat()
+        val cellWidth = safeWidth/field.columns.toFloat()
+        val cellHeight = safeHeight/field.rows.toFloat()
 
         cellSize = min(cellHeight, cellWidth)
-        cellPadding = cellSize * 0.2f
+        cellPadding = cellSize*0.2f
 
-        val fieldWidth = cellSize * field.columns
-        val fieldHeight = cellSize * field.rows
+        val fieldWidth = cellSize*field.columns
+        val fieldHeight = cellSize*field.rows
 
-        fieldRect.left = paddingLeft + (safeWidth - fieldWidth) / 2
-        fieldRect.top = paddingTop + (safeHeight - fieldHeight) / 2
-        fieldRect.right = paddingRight + (safeWidth - fieldWidth) / 2
-        fieldRect.bottom = paddingBottom + (safeHeight - fieldHeight) / 2
+        fieldRect.left = paddingLeft + (safeWidth - fieldWidth)/2
+        fieldRect.top = paddingTop + (safeHeight - fieldHeight)/2
+        fieldRect.right = paddingRight + (safeWidth - fieldWidth)/2
+        fieldRect.bottom = paddingBottom + (safeHeight - fieldHeight)/2
     }
 
     private val listener: OnFieldChangedListener = {
