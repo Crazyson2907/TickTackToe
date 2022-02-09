@@ -2,9 +2,11 @@ package crazyson.com.ua.ticktacktoe
 
 import android.content.Context
 import android.graphics.Color
+import android.graphics.RectF
 import android.util.AttributeSet
 import android.util.TypedValue
 import android.view.View
+import java.lang.Float.min
 import kotlin.properties.Delegates
 
 class TicTacToeView(
@@ -19,6 +21,7 @@ class TicTacToeView(
             field?.listeners?.remove(listener)
             field = value
             value?.listeners?.add(listener)
+            updateViewSizes()
             requestLayout()
             invalidate()
         }
@@ -26,6 +29,10 @@ class TicTacToeView(
     private var player1Color by Delegates.notNull<Int>()
     private var player2Color by Delegates.notNull<Int>()
     private var gridColor by Delegates.notNull<Int>()
+
+    private val fieldRect = RectF(0f, 0f, 0f, 0f)
+    private var cellSize: Float = 0f
+    private var cellPadding: Float = 0f
 
     constructor(context: Context, attributeSet: AttributeSet?, defStyleAttr: Int) : this(
         context,
@@ -84,6 +91,7 @@ class TicTacToeView(
 
     override fun onSizeChanged(w: Int, h: Int, oldw: Int, oldh: Int) {
         super.onSizeChanged(w, h, oldw, oldh)
+        updateViewSizes()
     }
 
     override fun onMeasure(widthMeasureSpec: Int, heightMeasureSpec: Int) {
@@ -97,6 +105,32 @@ class TicTacToeView(
 
         val desiredWidth = columns * desiredCellSizeInPixels + paddingLeft + paddingRight
         val desiredHeight = rows * desiredCellSizeInPixels + paddingTop + paddingBottom
+
+        setMeasuredDimension(
+            resolveSize(desiredWidth, widthMeasureSpec),
+            resolveSize(desiredHeight, heightMeasureSpec)
+        )
+    }
+
+    private fun updateViewSizes() {
+        val field = this.ticTacToeField ?: return
+
+        val safeWidth = width - paddingLeft - paddingRight
+        val safeHeight = height - paddingTop - paddingBottom
+
+        val cellWidth = safeWidth / field.columns.toFloat()
+        val cellHeight = safeHeight / field.rows.toFloat()
+
+        cellSize = min(cellHeight, cellWidth)
+        cellPadding = cellSize * 0.2f
+
+        val fieldWidth = cellSize * field.columns
+        val fieldHeight = cellSize * field.rows
+
+        fieldRect.left = paddingLeft + (safeWidth - fieldWidth) / 2
+        fieldRect.top = paddingTop + (safeHeight - fieldHeight) / 2
+        fieldRect.right = paddingRight + (safeWidth - fieldWidth) / 2
+        fieldRect.bottom = paddingBottom + (safeHeight - fieldHeight) / 2
     }
 
     private val listener: OnFieldChangedListener = {
@@ -108,6 +142,6 @@ class TicTacToeView(
         const val PLAYER2_DEFAULT_COLOR = Color.RED
         const val GRID_DEFAULT_COLOR = Color.GRAY
 
-        const val DESIRED_CELL_SIZE = 50.toFloat()
+        const val DESIRED_CELL_SIZE = 50f
     }
 }
