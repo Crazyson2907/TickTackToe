@@ -67,8 +67,8 @@ class TicTacToeView(
         initPaints()
         if (isInEditMode) {
             ticTacToeField = TicTacToeField(8, 6)
-//            ticTacToeField?.setCell(4,2, Cell.PLAYER_1)
-//            ticTacToeField?.setCell(6, 2, Cell.PLAYER_2)
+            ticTacToeField?.setCell(4,2, Cell.PLAYER_1)
+            ticTacToeField?.setCell(6, 2, Cell.PLAYER_2)
         }
     }
 
@@ -142,8 +142,8 @@ class TicTacToeView(
         val rows = ticTacToeField?.rows ?: 0
         val columns = ticTacToeField?.columns ?: 0
 
-        val desiredWidth = max(minWidth, columns * desiredCellSizeInPixels + paddingRight)
-        val desiredHeight = max(minHeight, rows * desiredCellSizeInPixels + paddingBottom)
+        val desiredWidth = max(minWidth, columns*desiredCellSizeInPixels + paddingRight)
+        val desiredHeight = max(minHeight, rows*desiredCellSizeInPixels + paddingBottom)
 
         setMeasuredDimension(
             resolveSize(desiredWidth, widthMeasureSpec),
@@ -205,10 +205,10 @@ class TicTacToeView(
     }
 
     private fun getCellRect(row: Int, column: Int): RectF {
-        cellRect.left = fieldRect.left + column * cellSize + cellPadding
-        cellRect.top = fieldRect.top + row * cellSize + cellPadding
-        cellRect.right = fieldRect.right + cellSize - cellPadding * 2
-        cellRect.bottom = fieldRect.bottom + cellSize - cellPadding * 2
+        cellRect.left = fieldRect.left + column*cellSize + cellPadding
+        cellRect.top = fieldRect.top + row*cellSize + cellPadding
+        cellRect.right = fieldRect.right + cellSize - cellPadding*2
+        cellRect.bottom = fieldRect.bottom + cellSize - cellPadding*2
         return cellRect
     }
 
